@@ -25,7 +25,7 @@ extension à un système multi-agents.
 
 | Paramètre | Valeur |
 |---|---|
-| Période simulée | 1<sup>er</sup> septembre 2025 → 29 mai 2026 (270 jours, ~2888 cycles de décision) |
+| Période simulée | 1er septembre 2025 → 29 mai 2026 (270 jours, ~2888 cycles de décision) |
 | Graine (`seed`) | 42 |
 | Argent initial | 75 000 FCFA |
 | Santé / fatigue / faim / stress initiaux | 80 / 25 / 25 / 30 (sur 100) |
@@ -109,7 +109,7 @@ bonne santé* et *se détendre* une fois la progression suffisante.
 
 ### Journal des événements (extraits)
 
-```
+```text
 Jour   4  Loyer payé (45 000)
 Jour  82  Examen surprise annoncé : Mathématiques dans 2 jour(s)
 Jour  83  Examen de Mathématiques réussi (score 92.2)
@@ -202,7 +202,7 @@ pytest
 
 ### Structure du projet
 
-```
+```text
 config/       Schémas Pydantic (AgentProfile, SimulationConfig) + config/default.yaml
 core/         Horloge, environnement (calendrier/prix/météo), scheduler
 agents/       Beliefs, desires, intentions, planificateur HTN, classe Student
@@ -217,5 +217,3 @@ dashboard/    Générateur du tableau de bord statique autonome
 tests/        Tests pytest (reproductibilité, critères d'acceptation)
 output/       Résultats exportés (généré à l'exécution, non versionné)
 ```
-#   a g e n t - s i m u l a t i o n  
- 
