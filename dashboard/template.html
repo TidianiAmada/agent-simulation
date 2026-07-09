@@ -1,0 +1,701 @@
+<title>Journal d'un étudiant autonome — simulation BDI</title>
+<style>
+  .viz-root {
+    --surface-1:      #fcfcfb;
+    --page:           #f9f9f7;
+    --ink:            #0b0b0b;
+    --ink-2:          #52514e;
+    --ink-muted:      #898781;
+    --grid:           #e1e0d9;
+    --line:           #c3c2b7;
+    --border:         rgba(11,11,11,0.10);
+    --accent:         #2a78d6;
+    --accent-wash:    rgba(42,120,214,0.10);
+    --s-blue:   #2a78d6;
+    --s-aqua:   #1baf7a;
+    --s-yellow: #eda100;
+    --s-green:  #008300;
+    --s-violet: #4a3aa7;
+    --s-red:    #e34948;
+    --s-magenta:#e87ba4;
+    --s-orange: #eb6834;
+    --good:     #0ca30c;
+    --warning:  #fab219;
+    --serious:  #ec835a;
+    --critical: #d03b3b;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    .viz-root {
+      --surface-1:   #1a1a19;
+      --page:        #0d0d0d;
+      --ink:         #ffffff;
+      --ink-2:       #c3c2b7;
+      --ink-muted:   #898781;
+      --grid:        #2c2c2a;
+      --line:        #383835;
+      --border:      rgba(255,255,255,0.10);
+      --accent:      #3987e5;
+      --accent-wash: rgba(57,135,229,0.16);
+      --s-blue:   #3987e5;
+      --s-aqua:   #199e70;
+      --s-yellow: #c98500;
+      --s-green:  #008300;
+      --s-violet: #9085e9;
+      --s-red:    #e66767;
+      --s-magenta:#d55181;
+      --s-orange: #d95926;
+    }
+  }
+  :root[data-theme="dark"] .viz-root {
+    --surface-1:   #1a1a19;
+    --page:        #0d0d0d;
+    --ink:         #ffffff;
+    --ink-2:       #c3c2b7;
+    --ink-muted:   #898781;
+    --grid:        #2c2c2a;
+    --line:        #383835;
+    --border:      rgba(255,255,255,0.10);
+    --accent:      #3987e5;
+    --accent-wash: rgba(57,135,229,0.16);
+    --s-blue:   #3987e5;
+    --s-aqua:   #199e70;
+    --s-yellow: #c98500;
+    --s-green:  #008300;
+    --s-violet: #9085e9;
+    --s-red:    #e66767;
+    --s-magenta:#d55181;
+    --s-orange: #d95926;
+  }
+  :root[data-theme="light"] .viz-root {
+    --surface-1:   #fcfcfb;
+    --page:        #f9f9f7;
+    --ink:         #0b0b0b;
+    --ink-2:       #52514e;
+    --ink-muted:   #898781;
+    --grid:        #e1e0d9;
+    --line:        #c3c2b7;
+    --border:      rgba(11,11,11,0.10);
+    --accent:      #2a78d6;
+    --accent-wash: rgba(42,120,214,0.10);
+    --s-blue:   #2a78d6;
+    --s-aqua:   #1baf7a;
+    --s-yellow: #eda100;
+    --s-green:  #008300;
+    --s-violet: #4a3aa7;
+    --s-red:    #e34948;
+    --s-magenta:#e87ba4;
+    --s-orange: #eb6834;
+  }
+
+  .viz-root {
+    background: var(--page);
+    color: var(--ink);
+    font-family: ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    min-height: 100%;
+    padding: clamp(16px, 3vw, 40px);
+  }
+  .viz-root * { box-sizing: border-box; }
+  .viz-root h1, .viz-root h2 {
+    font-family: ui-serif, "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+    font-weight: 600;
+    text-wrap: balance;
+    margin: 0;
+    color: var(--ink);
+  }
+  .mono {
+    font-family: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  .viz-root a { color: var(--accent); }
+
+  .shell { max-width: 1360px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+
+  /* ---------- Masthead ---------- */
+  .masthead {
+    display: flex; flex-wrap: wrap; gap: 20px; justify-content: space-between; align-items: flex-end;
+    padding-bottom: 18px; border-bottom: 1px solid var(--border);
+  }
+  .eyebrow {
+    text-transform: uppercase; letter-spacing: 0.08em; font-size: 11.5px; font-weight: 600;
+    color: var(--accent); margin: 0 0 6px;
+  }
+  .masthead h1 { font-size: clamp(24px, 3vw, 32px); }
+  .subtitle { color: var(--ink-2); margin: 6px 0 0; font-size: 14px; }
+  .final-strip { display: flex; gap: 10px; flex-wrap: wrap; }
+  .final-tile {
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 3px;
+    padding: 8px 14px; min-width: 92px;
+  }
+  .final-tile .ft-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-muted); }
+  .final-tile .ft-value { font-size: 19px; font-weight: 600; margin-top: 2px; }
+
+  /* ---------- Transport ---------- */
+  .transport {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 4px;
+    padding: 12px 16px; position: sticky; top: 12px; z-index: 5;
+  }
+  .play-btn {
+    width: 38px; height: 38px; border-radius: 50%; border: none; cursor: pointer;
+    background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center;
+    flex: none; transition: transform 120ms ease;
+  }
+  .play-btn:hover { transform: scale(1.06); }
+  .play-btn:focus-visible, .ghost-btn:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .play-btn svg { width: 15px; height: 15px; }
+  input[type="range"] { flex: 1 1 260px; accent-color: var(--accent); min-width: 140px; }
+  .transport-readout { display: flex; flex-direction: column; min-width: 150px; line-height: 1.3; }
+  .transport-readout .day-readout { color: var(--ink-muted); font-size: 12px; }
+  .transport-readout .mono { font-size: 14.5px; font-weight: 600; }
+  .speed-control { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--ink-2); }
+  .speed-control select {
+    background: var(--page); color: var(--ink); border: 1px solid var(--border); border-radius: 3px;
+    padding: 4px 6px; font-size: 12.5px;
+  }
+  .ghost-btn {
+    background: transparent; border: 1px solid var(--border); color: var(--ink-2);
+    border-radius: 3px; padding: 7px 12px; font-size: 12.5px; cursor: pointer;
+  }
+  .ghost-btn:hover { background: var(--accent-wash); color: var(--ink); }
+
+  /* ---------- Event track ---------- */
+  .event-track {
+    position: relative; height: 26px; background: var(--surface-1); border: 1px solid var(--border);
+    border-radius: 4px; margin-top: -6px;
+  }
+  .event-tick {
+    position: absolute; top: 50%; width: 8px; height: 8px; border-radius: 50%;
+    transform: translate(-50%, -50%); cursor: pointer; border: 2px solid var(--surface-1);
+  }
+  .event-tick:hover, .event-tick:focus-visible { transform: translate(-50%, -50%) scale(1.5); outline: none; }
+  .sev-good { background: var(--good); }
+  .sev-warning { background: var(--warning); }
+  .sev-serious { background: var(--serious); }
+  .sev-critical { background: var(--critical); }
+  .sev-neutral { background: var(--ink-muted); }
+
+  /* ---------- Layout ---------- */
+  .layout { display: grid; grid-template-columns: minmax(0, 1.9fr) minmax(280px, 1fr); gap: 20px; align-items: start; }
+  @media (max-width: 880px) { .layout { grid-template-columns: 1fr; } .transport { position: static; } }
+  .charts-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  .now-col { display: flex; flex-direction: column; gap: 16px; position: sticky; top: 78px; }
+  @media (max-width: 880px) { .now-col { position: static; } }
+
+  .card {
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 6px; padding: 16px 18px;
+  }
+  .card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 6px; flex-wrap: wrap; }
+  .card h2 { font-size: 16px; }
+  .chart-note { color: var(--ink-muted); font-size: 12.5px; }
+  .chart-wrap { position: relative; }
+  .chart-wrap svg { width: 100%; height: auto; display: block; overflow: visible; }
+
+  .legend { display: flex; gap: 12px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--ink-2); }
+  .legend-key { width: 12px; height: 2px; border-radius: 2px; flex: none; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+
+  .chart-tooltip {
+    position: absolute; pointer-events: none; background: var(--ink); color: var(--page);
+    border-radius: 4px; padding: 8px 10px; font-size: 12px; line-height: 1.5; opacity: 0;
+    transform: translate(-50%, -100%); white-space: nowrap; z-index: 6; box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+  }
+  .chart-tooltip.visible { opacity: 1; }
+  .chart-tooltip .tt-date { font-weight: 600; margin-bottom: 3px; display: block; }
+  .chart-tooltip .tt-row { display: flex; align-items: center; gap: 6px; }
+  .chart-tooltip .tt-key { width: 10px; height: 2px; border-radius: 2px; flex: none; }
+  .chart-tooltip .tt-val { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .chart-tooltip .tt-label { color: #cfcfc9; }
+
+  /* ---------- Now panel ---------- */
+  .now-action { font-size: 17px; font-weight: 600; margin: 8px 0 0; text-wrap: balance; }
+  .now-desire { color: var(--ink-muted); font-size: 12.5px; margin: 2px 0 12px; }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat-tile { border: 1px solid var(--border); border-radius: 4px; padding: 8px 10px; }
+  .stat-tile .st-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-muted); }
+  .stat-tile .st-value { font-size: 17px; font-weight: 600; margin-top: 2px; }
+  .stat-tile .st-value.job-unemployed { color: var(--critical); }
+
+  /* ---------- Event / exam lists ---------- */
+  .event-list, .exam-list { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; max-height: 260px; overflow-y: auto; }
+  .event-list li, .exam-list li { display: flex; gap: 8px; align-items: flex-start; font-size: 12.5px; }
+  .ev-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex: none; }
+  .ev-body .ev-date { color: var(--ink-muted); font-size: 11px; display: block; }
+  .ev-body .ev-desc { color: var(--ink); }
+  .event-list:empty::after, .exam-list:empty::after { content: "—"; color: var(--ink-muted); }
+  .exam-chip { font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 10px; margin-left: 4px; }
+  .exam-chip.pass { background: color-mix(in srgb, var(--good) 18%, transparent); color: var(--good); }
+  .exam-chip.fail { background: color-mix(in srgb, var(--critical) 18%, transparent); color: var(--critical); }
+  .exam-chip.pending { background: var(--grid); color: var(--ink-muted); }
+  .exam-pending .ev-desc { color: var(--ink-muted); }
+
+  /* ---------- Allocation bar ---------- */
+  .allocation-bar { display: flex; height: 22px; border-radius: 3px; overflow: hidden; gap: 2px; background: var(--page); margin-top: 6px; }
+  .allocation-seg { height: 100%; transition: width 120ms linear; }
+  @media (prefers-reduced-motion: reduce) { .allocation-seg { transition: none; } .play-btn { transition: none; } }
+
+  .foot { color: var(--ink-muted); font-size: 12px; padding-top: 8px; }
+  .foot code { font-family: ui-monospace, monospace; }
+
+  .visually-hidden {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  }
+</style>
+
+<div class="viz-root">
+  <div class="shell">
+
+    <header class="masthead">
+      <div class="masthead-text">
+        <p class="eyebrow">Simulation multi-agent · agent BDI à fonction d'utilité</p>
+        <h1>Journal d'un étudiant autonome</h1>
+        <p class="subtitle" id="period-label">1 septembre 2025 → 30 mai 2026</p>
+      </div>
+      <div class="final-strip" id="final-strip" aria-label="État final de la simulation"></div>
+    </header>
+
+    <div class="transport" role="group" aria-label="Lecture de la simulation">
+      <button class="play-btn" id="play-btn" aria-label="Lecture">
+        <svg id="play-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M4 2.5v11l10-5.5z"/></svg>
+        <svg id="pause-icon" viewBox="0 0 16 16" fill="currentColor" style="display:none"><path d="M4 2.5h3v11H4zM9 2.5h3v11H9z"/></svg>
+      </button>
+      <input type="range" id="scrubber" min="0" max="0" value="0" step="1" aria-label="Jour de la simulation">
+      <div class="transport-readout">
+        <span class="mono" id="date-readout">1 sept. 2025</span>
+        <span class="day-readout mono" id="day-readout">Jour 0</span>
+      </div>
+      <div class="speed-control">
+        <label for="speed">Vitesse</label>
+        <select id="speed">
+          <option value="180">0.5×</option>
+          <option value="90" selected>1×</option>
+          <option value="45">2×</option>
+          <option value="18">4×</option>
+        </select>
+      </div>
+      <button class="ghost-btn" id="end-btn">Aller à la fin</button>
+    </div>
+
+    <div class="event-track" id="event-track" role="group" aria-label="Chronologie des événements"></div>
+
+    <main class="layout">
+      <div class="charts-col">
+
+        <section class="card chart-card">
+          <div class="card-head">
+            <h2>Argent</h2>
+            <span class="chart-note mono" id="money-note"></span>
+          </div>
+          <div class="chart-wrap">
+            <svg id="money-chart" viewBox="0 0 960 220"></svg>
+            <div class="chart-tooltip" id="money-tooltip"></div>
+          </div>
+        </section>
+
+        <section class="card chart-card">
+          <div class="card-head">
+            <h2>Constantes de l'agent</h2>
+            <div class="legend" id="vitals-legend"></div>
+          </div>
+          <div class="chart-wrap">
+            <svg id="vitals-chart" viewBox="0 0 960 260"></svg>
+            <div class="chart-tooltip" id="vitals-tooltip"></div>
+          </div>
+        </section>
+
+        <section class="card chart-card">
+          <div class="card-head">
+            <h2>Progression académique</h2>
+            <div class="legend" id="academic-legend"></div>
+          </div>
+          <div class="chart-wrap">
+            <svg id="academic-chart" viewBox="0 0 960 200"></svg>
+            <div class="chart-tooltip" id="academic-tooltip"></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>Répartition du temps</h2>
+            <span class="chart-note mono" id="allocation-total"></span>
+          </div>
+          <div class="allocation-bar" id="allocation-bar"></div>
+          <div class="legend" id="allocation-legend" style="margin-top:10px"></div>
+        </section>
+
+      </div>
+
+      <aside class="now-col">
+        <section class="card now-card">
+          <h2>À cet instant</h2>
+          <p class="now-action" id="now-action">—</p>
+          <p class="now-desire" id="now-desire"></p>
+          <div class="stat-grid" id="stat-grid"></div>
+        </section>
+
+        <section class="card log-card">
+          <h2>Journal des événements</h2>
+          <ul class="event-list" id="event-list"></ul>
+        </section>
+
+        <section class="card exam-card">
+          <h2>Examens</h2>
+          <ul class="exam-list" id="exam-list"></ul>
+        </section>
+      </aside>
+    </main>
+
+    <p class="foot">Simulation MVP — agent utility-based à architecture BDI (beliefs / desires / intentions), planification HTN, modèle émotionnel et besoins NTA, événements stochastiques. Faites défiler ou lancez la lecture pour rejouer l'année universitaire jusqu'à l'état final.</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  const DATA = __SIMULATION_DATA__;
+
+  const days = DATA.days;
+  const maxDay = days.length - 1;
+  const eventsByDay = new Map();
+  DATA.events.forEach(e => { if (!eventsByDay.has(e.d)) eventsByDay.set(e.d, []); eventsByDay.get(e.d).push(e); });
+  const examsBySubject = {};
+  DATA.exams.forEach(x => { (examsBySubject[x.subject] ||= []).push(x); });
+
+  const $ = (id) => document.getElementById(id);
+
+  const fmtMoney = (v) => Math.round(v).toLocaleString("fr-FR") + " FCFA";
+  const fmtMoneyCompact = (v) => {
+    const abs = Math.abs(v);
+    if (abs >= 1000) return (v / 1000).toFixed(0) + "k";
+    return String(Math.round(v));
+  };
+  const fmtDate = (iso) => new Date(iso + "T00:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+  const fmtDateShort = (iso) => new Date(iso + "T00:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+
+  // ---------------------------------------------------------------
+  // Chart engine: a minimal reusable SVG line-chart builder.
+  // ---------------------------------------------------------------
+  const NS = "http://www.w3.org/2000/svg";
+  function svgEl(tag, attrs) {
+    const el = document.createElementNS(NS, tag);
+    for (const k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
+  }
+
+  function makeChart(svg, { series, yDomain, yTicks, height, area, yTickFormat }) {
+    yTickFormat = yTickFormat || ((v) => v);
+    const W = 960, H = height, M = { l: 40, r: 10, t: 10, b: 26 };
+    const innerW = W - M.l - M.r, innerH = H - M.t - M.b;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.innerHTML = "";
+
+    const x = (d) => M.l + (d / maxDay) * innerW;
+    const y = (v) => M.t + innerH - ((v - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerH;
+
+    // gridlines + y ticks
+    yTicks.forEach((t) => {
+      svg.appendChild(svgEl("line", { x1: M.l, x2: W - M.r, y1: y(t), y2: y(t), stroke: "var(--grid)", "stroke-width": 1 }));
+      const label = svgEl("text", { x: M.l - 8, y: y(t) + 3, "text-anchor": "end", class: "axis-label" });
+      label.setAttribute("style", "font-size:10px;fill:var(--ink-muted)");
+      label.textContent = yTickFormat(t);
+      svg.appendChild(label);
+    });
+    // baseline
+    svg.appendChild(svgEl("line", { x1: M.l, x2: W - M.r, y1: y(yDomain[0]), y2: y(yDomain[0]), stroke: "var(--line)", "stroke-width": 1 }));
+
+    // month ticks on x axis
+    let lastMonth = null;
+    days.forEach((d, i) => {
+      const m = d.date.slice(0, 7);
+      if (m !== lastMonth) {
+        lastMonth = m;
+        const lx = x(i);
+        const lbl = svgEl("text", { x: lx, y: H - 6, "text-anchor": "start" });
+        lbl.setAttribute("style", "font-size:10px;fill:var(--ink-muted)");
+        lbl.textContent = new Date(d.date + "T00:00:00").toLocaleDateString("fr-FR", { month: "short" });
+        svg.appendChild(lbl);
+        svg.appendChild(svgEl("line", { x1: lx, x2: lx, y1: M.t, y2: H - M.b, stroke: "var(--grid)", "stroke-width": 1 }));
+      }
+    });
+
+    const chartSeries = series.map((s) => {
+      const pts = days.map((d, i) => [x(i), y(s.get(d))]);
+      const g = svgEl("g", {});
+      let areaPath = null;
+      if (area) {
+        areaPath = svgEl("path", { fill: s.color, opacity: 0.10 });
+        g.appendChild(areaPath);
+      }
+      const pastPath = svgEl("path", { fill: "none", stroke: s.color, "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" });
+      const futurePath = svgEl("path", { fill: "none", stroke: s.color, "stroke-width": 2, opacity: 0.25, "stroke-linejoin": "round", "stroke-linecap": "round" });
+      g.appendChild(futurePath);
+      g.appendChild(pastPath);
+      const dot = svgEl("circle", { r: 4.5, fill: s.color, stroke: "var(--surface-1)", "stroke-width": 2 });
+      g.appendChild(dot);
+      svg.appendChild(g);
+      return { ...s, pts, pastPath, futurePath, areaPath, dot };
+    });
+
+    const playhead = svgEl("line", { x1: M.l, x2: M.l, y1: M.t, y2: H - M.b, stroke: "var(--ink-muted)", "stroke-width": 1, "stroke-dasharray": "3,3" });
+    svg.appendChild(playhead);
+
+    const hitRect = svgEl("rect", { x: M.l, y: M.t, width: innerW, height: innerH, fill: "transparent", cursor: "crosshair" });
+    svg.appendChild(hitRect);
+
+    function pathFrom(pts) {
+      if (!pts.length) return "";
+      return "M" + pts.map((p) => p[0].toFixed(1) + "," + p[1].toFixed(1)).join("L");
+    }
+
+    function update(dayIndex) {
+      const px = x(dayIndex);
+      playhead.setAttribute("x1", px);
+      playhead.setAttribute("x2", px);
+      chartSeries.forEach((s) => {
+        const past = s.pts.slice(0, dayIndex + 1);
+        const future = s.pts.slice(dayIndex);
+        s.pastPath.setAttribute("d", pathFrom(past));
+        s.futurePath.setAttribute("d", pathFrom(future));
+        if (s.areaPath) {
+          if (past.length) {
+            const base = y(yDomain[0]);
+            s.areaPath.setAttribute("d", pathFrom(past) + `L${past[past.length - 1][0].toFixed(1)},${base}L${past[0][0].toFixed(1)},${base}Z`);
+          } else {
+            s.areaPath.setAttribute("d", "");
+          }
+        }
+        const cur = s.pts[dayIndex];
+        s.dot.setAttribute("cx", cur[0]);
+        s.dot.setAttribute("cy", cur[1]);
+      });
+    }
+
+    return { x, y, innerX0: M.l, innerX1: W - M.r, hitRect, series: chartSeries, update };
+  }
+
+  function attachHover(chart, svg, tooltipEl, container) {
+    let dragging = false;
+    function dayFromEvent(evt) {
+      const rect = svg.getBoundingClientRect();
+      const scaleX = 960 / rect.width;
+      const px = (evt.clientX - rect.left) * scaleX;
+      const ratio = (px - chart.innerX0) / (chart.innerX1 - chart.innerX0);
+      return Math.max(0, Math.min(maxDay, Math.round(ratio * maxDay)));
+    }
+    function showTooltip(evt, dayIndex) {
+      const d = days[dayIndex];
+      const rows = chart.series.map((s) => `<div class="tt-row"><span class="tt-key" style="background:${s.color}"></span><span class="tt-val">${s.fmt ? s.fmt(s.get(d)) : s.get(d)}</span><span class="tt-label">${s.label}</span></div>`).join("");
+      tooltipEl.innerHTML = `<span class="tt-date">${fmtDate(d.date)}</span>${rows}`;
+      const wrapRect = container.getBoundingClientRect();
+      const svgRect = svg.getBoundingClientRect();
+      const relX = svgRect.left - wrapRect.left + (chart.x(dayIndex) / 960) * svgRect.width;
+      tooltipEl.style.left = relX + "px";
+      tooltipEl.style.top = (svgRect.top - wrapRect.top) + "px";
+      tooltipEl.classList.add("visible");
+    }
+    svg.addEventListener("pointermove", (evt) => {
+      const d = dayFromEvent(evt);
+      showTooltip(evt, d);
+      if (dragging) setDay(d);
+    });
+    svg.addEventListener("pointerleave", () => tooltipEl.classList.remove("visible"));
+    svg.addEventListener("pointerdown", (evt) => { dragging = true; pause(); setDay(dayFromEvent(evt)); });
+    window.addEventListener("pointerup", () => { dragging = false; });
+  }
+
+  // ---------------------------------------------------------------
+  // Build charts
+  // ---------------------------------------------------------------
+  const moneyValues = days.map((d) => d.money);
+  const moneyMin = Math.min(0, ...moneyValues), moneyMax = Math.max(...moneyValues);
+  const moneyPad = (moneyMax - moneyMin) * 0.12 || 1000;
+  const moneyDomain = [Math.floor((moneyMin - moneyPad) / 5000) * 5000, Math.ceil((moneyMax + moneyPad) / 5000) * 5000];
+  const moneyTicks = [];
+  for (let t = moneyDomain[0]; t <= moneyDomain[1]; t += (moneyDomain[1] - moneyDomain[0]) / 4) moneyTicks.push(Math.round(t / 1000) * 1000);
+
+  const moneyChart = makeChart($("money-chart"), {
+    height: 220, area: true, yDomain: moneyDomain, yTicks: moneyTicks, yTickFormat: fmtMoneyCompact,
+    series: [{ key: "money", color: "var(--s-blue)", label: "Argent", get: (d) => d.money, fmt: fmtMoneyCompact }],
+  });
+
+  const VITALS = [
+    { key: "health", color: "var(--s-aqua)", label: "Santé", get: (d) => d.health },
+    { key: "stress", color: "var(--s-red)", label: "Stress", get: (d) => d.stress },
+    { key: "fatigue", color: "var(--s-violet)", label: "Fatigue", get: (d) => d.fatigue },
+    { key: "moral", color: "var(--s-green)", label: "Moral", get: (d) => d.moral },
+    { key: "hunger", color: "var(--s-yellow)", label: "Faim", get: (d) => d.hunger },
+  ];
+  const vitalsChart = makeChart($("vitals-chart"), { height: 260, area: false, yDomain: [0, 100], yTicks: [0, 25, 50, 75, 100], series: VITALS });
+  $("vitals-legend").innerHTML = VITALS.map((s) => `<span class="legend-item"><span class="legend-key" style="background:${s.color}"></span>${s.label}</span>`).join("");
+
+  const SUBJECT_COLORS = ["var(--s-blue)", "var(--s-aqua)", "var(--s-yellow)", "var(--s-magenta)", "var(--s-orange)"];
+  const ACADEMIC = DATA.meta.subjects.map((subj, i) => ({ key: subj, color: SUBJECT_COLORS[i % SUBJECT_COLORS.length], label: subj, get: (d) => d.academic[subj] ?? 0 }));
+  const academicChart = makeChart($("academic-chart"), { height: 200, area: false, yDomain: [0, 100], yTicks: [0, 50, 100], series: ACADEMIC });
+  $("academic-legend").innerHTML = ACADEMIC.map((s) => `<span class="legend-item"><span class="legend-key" style="background:${s.color}"></span>${s.label}</span>`).join("");
+
+  attachHover(moneyChart, $("money-chart"), $("money-tooltip"), $("money-chart").parentElement);
+  attachHover(vitalsChart, $("vitals-chart"), $("vitals-tooltip"), $("vitals-chart").parentElement);
+  attachHover(academicChart, $("academic-chart"), $("academic-tooltip"), $("academic-chart").parentElement);
+
+  // ---------------------------------------------------------------
+  // Allocation bar
+  // ---------------------------------------------------------------
+  const CAT_COLORS = {
+    travail: "var(--s-blue)",
+    etude: "var(--s-aqua)",
+    sommeil: "var(--s-violet)",
+    loisir: "var(--s-yellow)",
+    autre: "var(--ink-muted)",
+  };
+
+  $("allocation-legend").innerHTML = DATA.meta.categories.map((c) => `<span class="legend-item"><span class="legend-dot" style="background:${CAT_COLORS[c.key]}"></span>${c.label}</span>`).join("");
+
+  const allocationBar = $("allocation-bar");
+  DATA.meta.categories.forEach((c) => {
+    const seg = document.createElement("div");
+    seg.className = "allocation-seg";
+    seg.dataset.key = c.key;
+    seg.style.background = CAT_COLORS[c.key];
+    seg.style.width = "0%";
+    seg.title = c.label;
+    allocationBar.appendChild(seg);
+  });
+
+  // ---------------------------------------------------------------
+  // Event track
+  // ---------------------------------------------------------------
+  const track = $("event-track");
+  DATA.events.forEach((e) => {
+    const dot = document.createElement("button");
+    dot.className = "event-tick sev-" + e.severity;
+    dot.style.left = (e.d / maxDay * 100) + "%";
+    dot.title = `${fmtDateShort(days[e.d].date)} — ${e.label} : ${e.description}`;
+    dot.setAttribute("aria-label", dot.title);
+    dot.addEventListener("click", () => { pause(); setDay(e.d); });
+    track.appendChild(dot);
+  });
+
+  // ---------------------------------------------------------------
+  // Final-state strip
+  // ---------------------------------------------------------------
+  const summary = DATA.summary;
+  const finalTiles = [
+    { label: "Argent final", value: fmtMoney(summary.final_money) },
+    { label: "Santé", value: summary.final_health.toFixed(0) },
+    { label: "Moral", value: summary.final_moral.toFixed(0) },
+    { label: "Réussite examens", value: isNaN(summary.exam_success_rate) ? "—" : Math.round(summary.exam_success_rate * 100) + "%" },
+    { label: "Maladies", value: summary.n_illness_episodes },
+  ];
+  $("final-strip").innerHTML = finalTiles.map((t) => `<div class="final-tile"><div class="ft-label">${t.label}</div><div class="ft-value">${t.value}</div></div>`).join("");
+  $("period-label").textContent = `${fmtDate(DATA.meta.start_date)} → ${fmtDate(DATA.meta.end_date)}`;
+
+  // ---------------------------------------------------------------
+  // Playback state
+  // ---------------------------------------------------------------
+  const scrubber = $("scrubber");
+  scrubber.max = String(maxDay);
+  let currentDay = 0;
+  let timer = null;
+
+  function renderNow(d) {
+    $("date-readout").textContent = fmtDate(d.date);
+    $("day-readout").textContent = `Jour ${d.d} / ${maxDay}`;
+    $("now-action").textContent = d.action_label || "—";
+    $("now-desire").textContent = d.desire_label ? `Motivé par : ${d.desire_label}` : "";
+
+    const tiles = [
+      { label: "Argent", value: fmtMoney(d.money) },
+      { label: "Santé", value: d.health.toFixed(0) },
+      { label: "Stress", value: d.stress.toFixed(0) },
+      { label: "Fatigue", value: d.fatigue.toFixed(0) },
+      { label: "Moral", value: d.moral.toFixed(0) },
+      { label: "Faim", value: d.hunger.toFixed(0) },
+      { label: "Dette de sommeil", value: d.sleep_debt.toFixed(1) + " h" },
+      { label: "Emploi", value: d.job_status === "employed" ? "En poste" : "Sans emploi", jobClass: d.job_status !== "employed" ? "job-unemployed" : "" },
+    ];
+    $("stat-grid").innerHTML = tiles.map((t) => `<div class="stat-tile"><div class="st-label">${t.label}</div><div class="st-value ${t.jobClass || ""}">${t.value}</div></div>`).join("");
+
+    $("money-note").textContent = fmtMoney(d.money);
+  }
+
+  function renderEventList(dayIndex) {
+    const visible = DATA.events.filter((e) => e.d <= dayIndex);
+    const list = $("event-list");
+    list.innerHTML = visible.slice(-40).reverse().map((e) => `<li><span class="ev-dot sev-${e.severity}"></span><span class="ev-body"><span class="ev-date">${fmtDateShort(days[e.d].date)}</span><span class="ev-desc">${escapeHtml(e.description)}</span></span></li>`).join("");
+  }
+
+  function renderExamList(dayIndex) {
+    const list = $("exam-list");
+    list.innerHTML = DATA.exams.map((x) => {
+      const revealed = x.d <= dayIndex;
+      const chip = !revealed ? `<span class="exam-chip pending">à venir</span>` : (x.passed ? `<span class="exam-chip pass">réussi</span>` : `<span class="exam-chip fail">échoué</span>`);
+      const cls = revealed ? "" : "exam-pending";
+      const scoreText = revealed ? `score ${x.score.toFixed(1)}` : "en attente";
+      return `<li class="${cls}"><span class="ev-body"><span class="ev-date">${fmtDateShort(x.date)} — ${x.subject}</span><span class="ev-desc">${scoreText}${chip}</span></span></li>`;
+    }).join("");
+  }
+
+  function renderAllocation(dayIndex) {
+    const totals = {};
+    let grand = 0;
+    DATA.meta.categories.forEach((c) => (totals[c.key] = 0));
+    for (let i = 0; i <= dayIndex; i++) {
+      const h = days[i].hours;
+      DATA.meta.categories.forEach((c) => { totals[c.key] += h[c.key] || 0; grand += h[c.key] || 0; });
+    }
+    allocationBar.querySelectorAll(".allocation-seg").forEach((seg) => {
+      const pct = grand > 0 ? (totals[seg.dataset.key] / grand) * 100 : 0;
+      seg.style.width = pct + "%";
+    });
+    $("allocation-total").textContent = Math.round(grand) + " h cumulées";
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function setDay(dayIndex) {
+    currentDay = Math.max(0, Math.min(maxDay, dayIndex));
+    const d = days[currentDay];
+    scrubber.value = String(currentDay);
+    renderNow(d);
+    renderEventList(currentDay);
+    renderExamList(currentDay);
+    renderAllocation(currentDay);
+    moneyChart.update(currentDay);
+    vitalsChart.update(currentDay);
+    academicChart.update(currentDay);
+  }
+
+  function play() {
+    if (currentDay >= maxDay) setDay(0);
+    $("play-icon").style.display = "none";
+    $("pause-icon").style.display = "";
+    $("play-btn").setAttribute("aria-label", "Pause");
+    const speed = Number($("speed").value);
+    timer = setInterval(() => {
+      if (currentDay >= maxDay) { pause(); return; }
+      setDay(currentDay + 1);
+    }, speed);
+  }
+  function pause() {
+    if (timer) clearInterval(timer);
+    timer = null;
+    $("play-icon").style.display = "";
+    $("pause-icon").style.display = "none";
+    $("play-btn").setAttribute("aria-label", "Lecture");
+  }
+
+  $("play-btn").addEventListener("click", () => (timer ? pause() : play()));
+  $("scrubber").addEventListener("input", (e) => { pause(); setDay(Number(e.target.value)); });
+  $("end-btn").addEventListener("click", () => { pause(); setDay(maxDay); });
+  $("speed").addEventListener("change", () => { if (timer) { pause(); play(); } });
+
+  setDay(0);
+})();
+</script>

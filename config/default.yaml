@@ -1,0 +1,43 @@
+simulation:
+  start_date: 2025-09-01
+  duration_days: 270
+  time_step_hours: 1.0
+  seed: 42
+  output_dir: output
+  illness_base_probability_per_hour: 0.0006
+  exam_surprise_probability_per_hour: 0.0004
+  inflation_period_days: 30
+  inflation_rate_mean: 0.01
+  inflation_rate_std: 0.004
+  rent_due_day_of_month: 5
+  job_loss_probability_per_hour: 0.00006
+  family_help_probability_per_hour: 0.0003
+
+agent:
+  name: etudiant
+  subjects: [Mathematiques, Algorithmique, Anglais]
+  initial_money: 75000.0
+  initial_health: 80.0
+  initial_fatigue: 25.0
+  initial_hunger: 25.0
+  initial_stress: 30.0
+  initial_sleep_debt: 0.0
+  initial_academic_progress: 5.0
+  job_status: employed
+  utility_weights:
+    academic: 0.25
+    financial: 0.20
+    fatigue: 0.15
+    stress: 0.15
+    hunger: 0.15
+    satisfaction: 0.10
+  emotion_stress_baseline: 30.0
+  emotion_moral_baseline: 60.0
+  emotion_decay_rate: 3.0
+  exploration_epsilon: 0.02
+  dynamic_weights_enabled: true
+  salary_per_shift: 8000.0
+  rent_amount: 45000.0
+  meal_cost_budget: 1000.0
+  meal_cost_normal: 2500.0
+  replanning_priority_threshold: 0.75

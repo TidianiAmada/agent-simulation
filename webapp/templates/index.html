@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Journal d'un étudiant autonome — simulation BDI</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+</head>
+<body>
+  <div class="viz-root">
+    <div class="shell">
+
+      <header class="masthead">
+        <div class="masthead-text">
+          <p class="eyebrow">Simulation multi-agent · agent BDI à fonction d'utilité</p>
+          <h1>Journal d'un étudiant autonome</h1>
+          <p class="subtitle" id="period-label">Chargement…</p>
+        </div>
+        <div class="final-strip" id="final-strip" aria-label="État final de la simulation"></div>
+      </header>
+
+      <div class="run-panel" role="group" aria-label="Configuration de la simulation">
+        <div class="run-field">
+          <label for="seed-input">Graine</label>
+          <input type="number" id="seed-input" min="0" step="1" value="{{ default_seed }}">
+        </div>
+        <div class="run-field">
+          <label for="duration-input">Durée (jours)</label>
+          <input type="number" id="duration-input" min="1" max="{{ max_duration }}" step="1" value="{{ default_duration }}">
+        </div>
+        <button class="accent-btn" id="run-btn">Lancer une nouvelle simulation</button>
+        <span class="run-status mono" id="run-status" role="status" aria-live="polite"></span>
+      </div>
+
+      <div class="transport" role="group" aria-label="Lecture de la simulation">
+        <button class="play-btn" id="play-btn" aria-label="Lecture">
+          <svg id="play-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M4 2.5v11l10-5.5z"/></svg>
+          <svg id="pause-icon" viewBox="0 0 16 16" fill="currentColor" style="display:none"><path d="M4 2.5h3v11H4zM9 2.5h3v11H9z"/></svg>
+        </button>
+        <input type="range" id="scrubber" min="0" max="0" value="0" step="1" aria-label="Jour de la simulation">
+        <div class="transport-readout">
+          <span class="mono" id="date-readout">—</span>
+          <span class="day-readout mono" id="day-readout">Jour 0</span>
+        </div>
+        <div class="speed-control">
+          <label for="speed">Vitesse</label>
+          <select id="speed">
+            <option value="180">0.5×</option>
+            <option value="90" selected>1×</option>
+            <option value="45">2×</option>
+            <option value="18">4×</option>
+          </select>
+        </div>
+        <button class="ghost-btn" id="end-btn">Aller à la fin</button>
+      </div>
+
+      <div class="event-track" id="event-track" role="group" aria-label="Chronologie des événements"></div>
+
+      <main class="layout">
+        <div class="charts-col">
+
+          <section class="card chart-card">
+            <div class="card-head">
+              <h2>Argent</h2>
+              <span class="chart-note mono" id="money-note"></span>
+            </div>
+            <div class="chart-wrap">
+              <svg id="money-chart" viewBox="0 0 960 220"></svg>
+              <div class="chart-tooltip" id="money-tooltip"></div>
+            </div>
+          </section>
+
+          <section class="card chart-card">
+            <div class="card-head">
+              <h2>Constantes de l'agent</h2>
+              <div class="legend" id="vitals-legend"></div>
+            </div>
+            <div class="chart-wrap">
+              <svg id="vitals-chart" viewBox="0 0 960 260"></svg>
+              <div class="chart-tooltip" id="vitals-tooltip"></div>
+            </div>
+          </section>
+
+          <section class="card chart-card">
+            <div class="card-head">
+              <h2>Progression académique</h2>
+              <div class="legend" id="academic-legend"></div>
+            </div>
+            <div class="chart-wrap">
+              <svg id="academic-chart" viewBox="0 0 960 200"></svg>
+              <div class="chart-tooltip" id="academic-tooltip"></div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-head">
+              <h2>Répartition du temps</h2>
+              <span class="chart-note mono" id="allocation-total"></span>
+            </div>
+            <div class="allocation-bar" id="allocation-bar"></div>
+            <div class="legend" id="allocation-legend" style="margin-top:10px"></div>
+          </section>
+
+        </div>
+
+        <aside class="now-col">
+          <section class="card now-card">
+            <h2>À cet instant</h2>
+            <p class="now-action" id="now-action">—</p>
+            <p class="now-desire" id="now-desire"></p>
+            <div class="stat-grid" id="stat-grid"></div>
+          </section>
+
+          <section class="card log-card">
+            <h2>Journal des événements</h2>
+            <ul class="event-list" id="event-list"></ul>
+          </section>
+
+          <section class="card exam-card">
+            <h2>Examens</h2>
+            <ul class="exam-list" id="exam-list"></ul>
+          </section>
+        </aside>
+      </main>
+
+      <p class="foot">Simulation MVP — agent utility-based à architecture BDI (beliefs / desires / intentions), planification HTN, modèle émotionnel et besoins NTA, événements stochastiques. Faites défiler ou lancez la lecture pour rejouer l'année universitaire jusqu'à l'état final, ou lancez une nouvelle simulation avec une autre graine.</p>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+</body>
+</html>
